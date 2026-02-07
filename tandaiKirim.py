@@ -134,7 +134,7 @@ def main():
             df = None
             for enc in encodings_to_try:
                 try:
-                    df = pd.read_csv('data_gc_profiling_bahan_kirim.csv', encoding=enc)
+                    df = pd.read_csv('naik-0702.csv', encoding=enc)
                     print(f"Berhasil membaca dengan encoding: {enc}")
                     break
                 except UnicodeDecodeError:
