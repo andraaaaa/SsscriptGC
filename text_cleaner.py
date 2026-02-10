@@ -47,7 +47,7 @@ def is_in_pasar(alamat):
             return 1
     return ''
 
-with open('cek_nama_jalan.csv', 'r', encoding="cp1252") as file:
+with open('dfkecil_recoded_2.csv', 'r', encoding="cp1252") as file:
     data = pd.read_csv(file, sep=";")
     df = pd.DataFrame(data)
 
@@ -57,5 +57,5 @@ with open('cek_nama_jalan.csv', 'r', encoding="cp1252") as file:
     df['is_in_perumahan'] = df['alamat_normalized'].apply(is_in_perumahan)
     df['is_in_pasar'] = df['alamat_normalized'].apply(is_in_pasar)
 
-print(df.head(50))
-#df.to_csv('alamat_cleaned.csv', index=False, sep=';')
+#print(df.head(50))
+df.to_csv('dfkecil_recoded_with_rtrw.csv', index=False, sep=';')

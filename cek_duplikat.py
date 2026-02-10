@@ -7,7 +7,6 @@ from collections import Counter
 
 
 
-
 buffer = []
 c = 0
 dup_global = 1
@@ -49,12 +48,18 @@ def preprocess(text):
     text = remove_stopwords(text)
     return text
 
-with open("direktori_usaha_full_all_columns_2026.csv", "r") as f:
-    p = pd.read_csv(f, dtype=str, sep=";", encoding="utf-8")
+with open("recheck file\\part2.csv", "r") as f:
+    p = pd.read_csv(f, dtype=str, sep=";", encoding="cp1252")
     df = pd.DataFrame(p)
     #df = df_awal.head(1000).copy()
 
 def extract_kbli_2d(text):
+    if pd.isna(text):
+        return "00"
+    m = re.search(r'KBLI\s*[:=]\s*(\d{2})\d*', str(text))
+    return m.group(1) if m else "00"
+
+def extract_kbli_5d(text):
     if pd.isna(text):
         return "00"
     m = re.search(r'KBLI\s*[:=]\s*(\d{2})\d*', str(text))
@@ -194,5 +199,5 @@ for dup_id, g in df_besar.groupby('id_duplikat'):
 print("Mengurutkan data ...")
 df_besar.sort_values(by=['is_duplicate', 'id_duplikat', 'gc_flag_duplikat'], ascending=True)
 print("Menyimpan data ke CSV ...")
-df_besar.to_csv("advanced_pairing_dfkecil_2.csv", sep=";", index=False)
+df_besar.to_csv("part2_cekdup.csv", sep=";", index=False)
 print("Data disimpan.")

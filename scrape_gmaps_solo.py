@@ -44,8 +44,15 @@ def extract_text(page: Page, xpath: str) -> str:
     return ""
 
 def extract_place(page: Page) -> Place:
+    old_url = page.url
     # XPaths
-    url = page.url
+    page.wait_for_function(
+    "(u) => location.href !== u",
+    arg=old_url,
+    timeout=10000
+    )
+    url = page.evaluate("() => location.href")
+
     name_xpath = '//div[@class="TIHn2 "]//h1[@class="DUwDvf lfPIob"]'
     address_xpath = '//button[@data-item-id="address"]//div[contains(@class, "fontBodyMedium")]'
     website_xpath = '//a[@data-item-id="authority"]//div[contains(@class, "fontBodyMedium")]'
@@ -117,41 +124,87 @@ def extract_place(page: Page) -> Place:
     return place
 
 def search_place(page: Page, search_for: str):
-    txt_files = f'txt_multi_maps_results\\{search_for}.txt'
+    txt_files = f'SsscriptGC\\txt_multi_maps_results\\{search_for}.txt' 
     try:
         search = page.locator('xpath=//form//input')
         search.click()
         search.fill(search_for)
         page.keyboard.press("Enter")
 
-        page.wait_for_selector('//a[contains(@href, "https://www.google.com/maps/place")]')
+        print("menunggu page informasi halaman ...")
+        #page.wait_for_load_state("networkidle")
+        single = ''
         multi_results = page.locator('//a[contains(@href, "https://www.google.com/maps/place")]')
-        if multi_results.count() > 0:
-            print("Hasil lebih dari satu. Mengambil informasi URL lainnya ...")
-            listings = page.locator('//a[contains(@href, "https://www.google.com/maps/place")]')
-            urls = []
-            for i in range(listings.count()):
-                href = listings.nth(i).get_attribute("href")
-                if href:
-                    urls.append(href)
-            with open(txt_files, "w", encoding="utf-8") as f:
-                for url in urls:
-                    f.write(url + "\n")
-            print(f'Data URL sudah disimpan dalam {search_for}.txt')
-            return None
-        else:
-            try:
-                page.wait_for_selector('//div[@class="TIHn2 "]//h1[@class="DUwDvf lfPIob"]', timeout=10000)
-                time.sleep(1.5)  # Give time for details to load
-                place = extract_place(page)
-                if place.name:
-                    print("Place {place.name} found.")
-                    return place
+        try:
+            page.locator('//div[@class="aoRNLd kn2E5e lvtCsd "]')
+            #page.wait_for_selector('//div[@class="TIHn2 "]//h1[@class="DUwDvf lfPIob"]', timeout=10000)
+            print("Div Ditemukan. Mengambil info halaman")
+            time.sleep(1.5)  # Give time for details to load
+            place = extract_place(page)
+            if place.name:
+                print(f"Tempat {place.name} ditemukan.")
+                place.keyword = search_for
+                return place
+            else:
+                listings = page.locator('//a[contains(@href, "https://www.google.com/maps/place")]')
+                if listings.count() > 0:
+                    print("Hasil lebih dari satu. Mengambil informasi URL lainnya ...")
+                    urls = []
+                    for i in range(listings.count()):
+                        href = listings.nth(i).get_attribute("href")
+                        if href:
+                            urls.append(href)
+                    with open(txt_files, "w", encoding="utf-8") as f:
+                        for url in urls:
+                            f.write(url + "\n")
+                    print(f'Data URL sudah disimpan dalam {search_for}.txt')
                 else:
+                    print(f"Tempat {search_for} tidak ada")
                     return None
-            except:
-                logging.warning(f"No name found for {search_for}, skipping.")
-                return None
+        except Exception as e: 
+                print(f'Tempat gak ada : {e}') 
+    except Exception as e:
+        logging.warning(f"Failed to extract place for {search_for}: {e}")
+
+def search_place_with_csv(page: Page, search_for: str):
+    txt_files = f'SsscriptGC\\txt_multi_maps_results\\{search_for}.txt' 
+    try:
+        search = page.locator('xpath=//form//input')
+        search.click()
+        search.fill(search_for)
+        page.keyboard.press("Enter")
+
+        print("menunggu page informasi halaman ...")
+        #page.wait_for_load_state("networkidle")
+        single = ''
+        multi_results = page.locator('//a[contains(@href, "https://www.google.com/maps/place")]')
+        try:
+            page.locator('//div[@class="aoRNLd kn2E5e lvtCsd "]')
+            #page.wait_for_selector('//div[@class="TIHn2 "]//h1[@class="DUwDvf lfPIob"]', timeout=10000)
+            print("Div Ditemukan. Mengambil info halaman")
+            time.sleep(1.5)  # Give time for details to load
+            place = extract_place(page)
+            if place.name:
+                print(f"Tempat {place.name} ditemukan.")
+                return place
+            else:
+                listings = page.locator('//a[contains(@href, "https://www.google.com/maps/place")]')
+                if listings.count() > 0:
+                    print("Hasil lebih dari satu. Mengambil informasi URL lainnya ...")
+                    urls = []
+                    for i in range(listings.count()):
+                        href = listings.nth(i).get_attribute("href")
+                        if href:
+                            urls.append(href)
+                    with open(txt_files, "w", encoding="utf-8") as f:
+                        for url in urls:
+                            f.write(url + "\n")
+                    print(f'Data URL sudah disimpan dalam {search_for}.txt')
+                else:
+                    print(f"Tempat {search_for} tidak ada")
+                    return None
+        except Exception as e: 
+                print(f'Tempat gak ada : {e}') 
     except Exception as e:
         logging.warning(f"Failed to extract place for {search_for}: {e}")
 
@@ -171,24 +224,48 @@ def save_places_to_csv(places: List[Place], output_path: str = "result.csv", app
     else:
         logging.warning("No data to save. DataFrame is empty.")
 
+r = []
+SAVE_EVERY = 20
+
 def main():
+
     place = None
     setup_logging()
     csv_path = "jalan_places.csv"
+    csv_output = 'hasil_scrape_usaha_part_1.csv'
+    first_write = not os.path.exists(csv_output)
 
     if not Path(csv_path).exists():
         df_init = pd.DataFrame(columns=[f.name for f in fields(Place)])
         df_init.to_csv(csv_path, index=False)
+
+    with open('SsscriptGC\\data_part1_cek_maps.csv', 'r') as f:
+        pf = pd.read_csv(f, sep=";", encoding="cp1252")
+        df = pd.DataFrame(pf)
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
         page = browser.new_page()
         page.goto("https://www.google.com/maps/@32.9817464,70.1930781,3.67z?", timeout=60000)
         page.wait_for_timeout(1000)
-        
-        place = search_place(page, "AMANAH EXPRESS TANAH GROGOT Jalan Delima RT 001")
-        if place is not None:
-            print(place)
+
+        lists = df['alamat'].head(1000)
+        c = 1
+        for i, l in enumerate(lists, start=1):
+            try:
+                print(f"Mengambil data {c}/{len(lists)} : {l} ")
+                place = search_place(page, l)
+                if place is not None:
+                    print(place)
+                    d_row = pd.DataFrame([place])
+                    d_row.to_csv(csv_output, mode='a', sep=";", header=first_write, index=False)
+                    first_write = False
+            except Exception as e:
+                print(f"Error saat mengambil data {l} : {e}")
+            time.sleep(5)
+            c += 1
+        #place = search_place(page, "sebatin segendang")
+        print(place)
         browser.close()
 
 if __name__ == "__main__":

@@ -51,8 +51,8 @@ BASE_PAYLOAD = {
 }
 
 # Nama file output
-OUTPUT_EXCEL = "direktori_usaha_full_all_columns_2026.xlsx"
-OUTPUT_CSV_FALLBACK = "direktori_usaha_full_all_columns_2026.csv"
+OUTPUT_EXCEL = "direktori_usaha_full_2026.xlsx"
+OUTPUT_CSV_FALLBACK = "direktori_usaha_full_2026.csv"
 
 DELAY_BETWEEN_REQUEST = 1.3     # detik, jangan terlalu kecil
 # ------------------------------------------------------
@@ -214,7 +214,7 @@ def main():
 
     # Simpan ke CSV
     try:
-        df.to_csv(OUTPUT_CSV_FALLBACK, index=False, encoding='utf-8-sig', quoting=csv.QUOTE_ALL)
+        df.to_csv(OUTPUT_CSV_FALLBACK, index=False, encoding='utf-8-sig', sep=";", quoting=csv.QUOTE_ALL)
         print(f"\nBerhasil disimpan ke: {OUTPUT_CSV_FALLBACK}")
         print(f"\nTips: Jika membuka csv di excel pilih dont convert")
         print(f"\nData hasil download dari matchapro ini merupakan data sesudah dan sebelum profiling, wajin diolah terlebih dahulu sebelum dikirim")

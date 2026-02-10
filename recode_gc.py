@@ -34,7 +34,7 @@ def is_usaha_perorangan(u):
             return 0
         else: return 1
 
-with open('advanced_pairing_dfkecil_2.csv', 'r') as f:
+with open('advanced_pairing_part_1.csv', 'r') as f:
     p = pd.read_csv(f, sep=";", encoding="cp1252")
     df = pd.DataFrame(p)
 
